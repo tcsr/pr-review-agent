@@ -34,6 +34,12 @@ def create_app(settings, queue, verify: bool = True) -> FastAPI:
         repo_cfg = find_repo(settings, event.platform.value, event.repo)
         if repo_cfg is None:
             return {"enqueued": 0}
+        if event.action == "comment":
+            handle = settings.bot_handle
+            if not handle or f"@{handle}" not in (event.comment_body or ""):
+                return {"enqueued": 0}
+            jobs = queue.enqueue_event(event, ["qa_reply"])
+            return {"enqueued": len(jobs)}
         jobs = queue.enqueue_event(event, resolve_tasks(settings, repo_cfg))
         return {"enqueued": len(jobs)}
 
