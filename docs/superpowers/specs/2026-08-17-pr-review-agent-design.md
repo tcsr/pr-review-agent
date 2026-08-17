@@ -75,6 +75,9 @@ reviewer, tasks) never references a concrete provider.
 | `app/store` | SQLAlchemy models + session; SQLite/Postgres | — |
 | `app/config` | pydantic-settings; env + YAML merge | — |
 | `app/redact` | strip secrets/tokens from diffs before LLM | — |
+| `app/rules` | load + evaluate deterministic gates and NL review criteria; merge by precedence | store, GitAdapter |
+| `app/stack_detect` | infer stacks from changed files + manifests | git/models |
+| `app/packs` | built-in per-stack rulepacks (criteria/prompt files) + loader | rules |
 
 ### 4.1 `GitPlatformAdapter` interface
 
@@ -160,6 +163,70 @@ and may run concurrently.
   update their prior bot comment (by marker) instead of stacking duplicates
   within the same `head_sha`.
 
+## 6a. PR rules & criteria
+
+Two kinds of rules, both supported.
+
+### A. Deterministic gates (`app/rules`, no LLM)
+Code-evaluated checks against PR metadata/diff. Cheap, reliable. Each gate has a
+`severity`: `block` | `warn`.
+- `block` → forces `verdict=request_changes`, overriding the LLM's approve; the
+  reason is posted.
+- `warn` → posted in the `compliance` checklist, does not change verdict.
+
+Built-in gates: `require_linked_issue`, `require_pr_description`,
+`max_changed_files`, `max_changed_lines`, `require_tests_for` (glob → require a
+matching test change), `title_regex` (e.g. conventional commits),
+`branch_regex`, `ci_must_pass`.
+
+### B. LLM review criteria (natural language)
+A list of NL rules injected into the `code_review`/`suggest_fixes` prompts, plus
+optional full `prompt_overrides` per task. Teams express house style, security
+conventions, etc.
+
+### Rule sources & precedence (highest wins)
+1. **Target repo `.pr-agent.yaml`** (committed in the reviewed repo) — each team
+   owns its rules; fetched from the PR's base ref at review time.
+2. **Server per-repo config** (`repos[].rules`).
+3. **Auto-loaded stack rulepacks** (§6b).
+4. **Global defaults** (`rules:` at top level).
+
+Merge is per-key deep-merge; lists append unless a key is explicitly set to
+replace. Missing `.pr-agent.yaml` is fine → fall through to server/global.
+
+## 6b. Multi-stack support
+
+The LLM reviews any language out of the box. Stack awareness sharpens it.
+
+### Detection (`app/stack_detect`)
+Infer the set of stacks for a PR from:
+- changed file extensions (`.tsx`, `.java`, `.py`, `.scss`, …)
+- manifest / signal files: `package.json` deps (Angular vs React vs Next vs
+  NestJS), `angular.json`, `next.config.js`, `nest-cli.json`, `pom.xml` /
+  `build.gradle` (Java), `pyproject.toml` / `requirements.txt` (Python).
+
+A PR may resolve to multiple stacks (e.g. NestJS API + Angular UI); each
+detected stack's pack is loaded.
+
+### Built-in rulepacks (`app/packs`)
+One criteria/prompt file per stack, auto-injected when detected. Ship v1 packs
+for: Angular, React, Next.js, NestJS, Node, Java, Python, JavaScript/TypeScript,
+CSS/SCSS. Examples:
+
+| Stack | Sample built-in criteria |
+|-------|--------------------------|
+| Angular | `OnPush` detection, unsubscribe/`takeUntil` leaks, no template logic, DI |
+| React | hook dep arrays, no inline-object props, `key` props, no direct DOM |
+| Next.js | server/client component boundaries, `use client` misuse, data fetching |
+| NestJS | DTO validation, module boundaries, injectable scope, guards/pipes |
+| Node | async error handling, no sync-blocking calls, stream handling |
+| Java | null safety, try-with-resources, thread safety, exception hygiene |
+| Python | type hints, PEP8, context managers, mutable default args |
+| CSS/SCSS | specificity, `!important` abuse, responsive units |
+
+Teams override or disable any pack (see config). Packs are plain files, so new
+stacks are added without code changes.
+
 ## 7. Configuration
 
 Single `config.yaml`; secrets via env interpolation (`${VAR}`).
@@ -190,16 +257,41 @@ defaults:
   tasks: [code_review, summarize, suggest_fixes, verdict, compliance, triage, qa_reply]
   skip_globs: ["*.lock", "dist/**", "vendor/**", "*.min.js"]
 
+stacks:
+  auto_detect: true
+  packs:                        # optional; omit → use built-ins
+    react: ./packs/react.md     # override a built-in pack
+    angular: off                # disable a built-in pack
+
+rules:                          # global defaults; repo .pr-agent.yaml overrides
+  gates:
+    require_linked_issue: { enabled: true,  severity: warn }
+    require_pr_description: { enabled: true, severity: warn }
+    max_changed_files: { value: 50, severity: warn }
+    require_tests_for: { globs: ["src/**"], severity: block }
+    title_regex: { pattern: "^(feat|fix|chore|docs)(\\(.+\\))?: ", severity: block }
+    ci_must_pass: { enabled: true, severity: block }
+  review_criteria:
+    - "No leftover debug prints/console.log."
+    - "New public functions need docstrings."
+    - "No secrets or hardcoded credentials."
+  prompt_overrides:
+    code_review: null           # or ./prompts/custom_review.md
+
 repos:
   - platform: github            # github | bitbucket | gitlab
     full_name: myorg/myrepo
     token: ${GITHUB_TOKEN}
     tasks: null                 # null → inherit defaults; or override list
+    rules: null                 # null → inherit; or per-repo override block
   - platform: bitbucket
     full_name: myteam/myrepo
     token: ${BITBUCKET_TOKEN}
     tasks: [code_review, summarize]
 ```
+
+Each reviewed repo may also commit a `.pr-agent.yaml` at its root (same `rules`/
+`stacks` shape) which takes precedence over server config (§6a).
 
 Config validated at startup (pydantic); invalid config → fail fast with a clear
 message. Unknown platform/provider → startup error, not runtime crash.
@@ -258,16 +350,21 @@ SQLite and Postgres share the same models. Migrations via Alembic.
 1. Skeleton: config, store, neutral models, `FakeGitAdapter`, `FakeLLMAdapter`,
    queue + dedup — all tested offline.
 2. Reviewer + `code_review` + `summarize` tasks against fakes.
-3. Remaining 5 tasks against fakes.
-4. Real GitHub adapter (contract-tested).
-5. Claude + OpenAI + local LLM adapters.
-6. Ingress (webhooks + signature verify) and poller.
-7. Bitbucket + GitLab adapters.
-8. Dockerfile, compose, Alembic migrations, docs.
+3. Rules engine (deterministic gates + NL criteria) + precedence merge, tested
+   offline.
+4. Stack detection + built-in rulepacks; pack auto-injection into prompts.
+5. Remaining 5 tasks against fakes.
+6. Real GitHub adapter (contract-tested), incl. `.pr-agent.yaml` fetch.
+7. Claude + OpenAI + local LLM adapters.
+8. Ingress (webhooks + signature verify) and poller.
+9. Bitbucket + GitLab adapters.
+10. Dockerfile, compose, Alembic migrations, docs.
+11. (Future) Optional native-linter integration (eslint/ruff/checkstyle/…).
 
 ## 12. Open questions / future
 
 - Auto-merge on approval (deferred).
 - Web dashboard for status/metrics (deferred).
-- Per-org custom review rulepacks / prompt overrides (deferred, but prompt
-  templates are files from day one to allow this later).
+- Native-linter integration as ground-truth for the LLM (deferred, milestone 11).
+- Rulepack marketplace / sharing across orgs (deferred; packs are files, so this
+  is additive later).
