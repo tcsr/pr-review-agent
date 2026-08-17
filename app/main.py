@@ -34,8 +34,10 @@ def _worker_loop(queue, settings, stop):
 def run(config_path: str = "config.yaml") -> None:  # pragma: no cover
     import uvicorn
     from apscheduler.schedulers.background import BackgroundScheduler
+    from app.migrate import run_migrations
 
     settings = load_settings(config_path)
+    run_migrations(settings.store.url)
     app, queue = build_app(settings)
 
     stop = threading.Event()
