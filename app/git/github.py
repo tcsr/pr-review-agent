@@ -25,6 +25,7 @@ class GitHubAdapter(GitPlatformAdapter):
              "Accept": "application/vnd.github+json"},
             transport=transport,
         )
+        self._head_sha_cache: dict[tuple[str, int], str] = {}
 
     def _get(self, path: str):
         resp = self._client.get(path)
@@ -35,6 +36,12 @@ class GitHubAdapter(GitPlatformAdapter):
         resp = self._client.post(path, json=payload)
         raise_for_status(resp)
         return resp.json()
+
+    def _head_sha(self, repo, pr_number) -> str:
+        key = (repo, pr_number)
+        if key not in self._head_sha_cache:
+            self._head_sha_cache[key] = self.get_pr_meta(repo, pr_number).head_sha
+        return self._head_sha_cache[key]
 
     def get_pr_meta(self, repo, pr_number) -> PRMeta:
         pr = self._get(f"/repos/{repo}/pulls/{pr_number}")
@@ -74,7 +81,7 @@ class GitHubAdapter(GitPlatformAdapter):
         return str(r["id"])
 
     def post_inline_comment(self, repo, pr_number, path, line, body, side: Side) -> str:
-        commit_id = self.get_pr_meta(repo, pr_number).head_sha
+        commit_id = self._head_sha(repo, pr_number)
         r = self._post(f"/repos/{repo}/pulls/{pr_number}/comments", {
             "body": body, "path": path, "line": line,
             "side": side.name.upper(), "commit_id": commit_id,
@@ -91,5 +98,6 @@ class GitHubAdapter(GitPlatformAdapter):
                         body=c.get("body", "")) for c in rows]
 
     def reply(self, repo, pr_number, in_reply_to, body) -> str:
+        # GitHub issue comments are not natively threaded; in_reply_to is accepted for interface conformance but not sent.
         r = self._post(f"/repos/{repo}/issues/{pr_number}/comments", {"body": body})
         return str(r["id"])

@@ -19,6 +19,8 @@ tests run offline using `httpx.MockTransport` — no live API calls.
 
     cp config.example.yaml config.yaml   # then set env vars
 
+GitHub auth uses a Bearer token (works with fine-grained and classic personal access tokens on api.github.com).
+
 Providers: `claude` (Anthropic /v1/messages), `openai` (/v1/chat/completions),
 `local` (OpenAI-compatible endpoint like Ollama), `fake` (offline default).
 

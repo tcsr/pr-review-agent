@@ -21,6 +21,13 @@ def test_raise_for_status_ok_on_200():
     raise_for_status(httpx.Response(200, text="ok"))  # no raise
 
 
+def test_raise_for_status_raises_on_5xx():
+    resp = httpx.Response(503, text="unavailable")
+    with pytest.raises(AdapterError) as ei:
+        raise_for_status(resp)
+    assert ei.value.status == 503
+
+
 def test_build_client_uses_transport():
     def handler(request):
         return httpx.Response(200, json={"seen": str(request.url)})

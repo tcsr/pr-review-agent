@@ -58,3 +58,24 @@ def test_get_thread_maps_comments():
     thread = _adapter(handler).get_thread("o/r", 1)
     assert thread[0].author == "bob"
     assert thread[0].id == "1"
+
+
+def test_inline_comments_fetch_head_sha_once():
+    calls = {"pulls": 0}
+    def handler(request):
+        import json
+        p = request.url.path
+        if p == "/repos/o/r/pulls/1":
+            calls["pulls"] += 1
+            return httpx.Response(200, json={
+                "title": "t", "body": "", "user": {"login": "a"},
+                "base": {"sha": "b"}, "head": {"sha": "H"}, "labels": []})
+        if p == "/repos/o/r/commits/H/status":
+            return httpx.Response(200, json={"state": "pending"})
+        if p == "/repos/o/r/pulls/1/comments":
+            return httpx.Response(201, json={"id": 1})
+        return httpx.Response(404, text=p)
+    a = _adapter(handler)
+    a.post_inline_comment("o/r", 1, "a.py", 1, "x", Side.right)
+    a.post_inline_comment("o/r", 1, "a.py", 2, "y", Side.right)
+    assert calls["pulls"] == 1
