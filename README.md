@@ -75,6 +75,21 @@ Point a GitHub `issue_comment` webhook at `/webhook/github` (same endpoint).
 Comment events enqueue only the `qa_reply` task, and only when the bot is
 mentioned. Replies are posted as standard PR comments (GitHub's REST API does not support nested comment threads).
 
+## Deployment (slice 7)
+Run in Docker; the container migrates the schema on startup, then serves.
+
+    cp config.example.yaml config.yaml     # set env vars: LLM_API_KEY, GITHUB_TOKEN, WEBHOOK_SECRET
+    docker compose up --build              # serves on :8000 with SQLite (volume: agent-data)
+
+Scale out with Postgres — point `store.url` at the Postgres service and start it:
+
+    docker compose --profile postgres up --build
+    # store.url: postgresql+psycopg://agent:agent@postgres/agent
+
+Schema is managed by Alembic (`alembic/versions/`); migrations run automatically
+on startup. The DB-backed queue lets multiple `agent` containers share one
+Postgres and coordinate via atomic job claims.
+
 ## Next slices
 Additional platforms (Bitbucket/GitLab), the admin UI, and deferred tasks
 — see docs/superpowers/specs.
