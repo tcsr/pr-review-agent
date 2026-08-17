@@ -24,7 +24,10 @@ def create_app(settings, queue, verify: bool = True) -> FastAPI:
             sig = request.headers.get("X-Hub-Signature-256")
             if not verify_github_signature(secret, body, sig):
                 return Response(status_code=401)
-        payload = json.loads(body)
+        try:
+            payload = json.loads(body)
+        except json.JSONDecodeError:
+            return Response(status_code=400)
         event = parse_github_event(payload, request.headers.get("X-GitHub-Event"))
         if event is None:
             return {"enqueued": 0}

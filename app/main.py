@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 import time
 import threading
 
 from app.config import load_settings
+
+logger = logging.getLogger(__name__)
 from app.ingress.app import create_app
 from app.poller import poll_once
 from app.queue import Queue
@@ -24,6 +27,7 @@ def _worker_loop(queue, settings, stop):
             if not process_one(queue, settings):
                 time.sleep(1.0)
         except Exception:
+            logger.exception("worker error, continuing")
             time.sleep(1.0)  # never let the loop die on a transient error
 
 

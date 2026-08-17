@@ -7,7 +7,8 @@ from app.store.tables import Base
 
 
 def make_engine(url: str):
-    return create_engine(url, future=True)
+    connect_args = {"timeout": 30} if url.startswith("sqlite") else {}
+    return create_engine(url, future=True, connect_args=connect_args)
 
 
 def make_session_factory(engine):

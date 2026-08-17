@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.models import Event
 from app.store.tables import Job, DeadLetter
@@ -41,13 +41,14 @@ class Queue:
 
     def claim(self) -> Job | None:
         with self.session_factory() as s:
-            job = s.execute(
-                select(Job).where(Job.status == "pending").order_by(Job.id).limit(1)
-            ).scalar_one_or_none()
+            subq = (select(Job.id).where(Job.status == "pending")
+                    .order_by(Job.id).limit(1).scalar_subquery())
+            stmt = (update(Job).where(Job.id == subq)
+                    .values(status="in_progress", attempts=Job.attempts + 1)
+                    .returning(Job))
+            job = s.execute(stmt).scalar_one_or_none()
             if job is None:
                 return None
-            job.status = "in_progress"
-            job.attempts += 1
             s.commit()
             s.refresh(job)
             s.expunge(job)

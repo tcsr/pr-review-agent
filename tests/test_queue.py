@@ -69,3 +69,24 @@ def test_complete_missing_job_raises():
     q = _queue()
     with pytest.raises(ValueError):
         q.complete(9999)
+
+
+def test_claim_atomic_under_threads(tmp_path):
+    import threading
+    from app.store.db import make_engine, make_session_factory, init_db
+    from app.queue import Queue
+    engine = make_engine(f"sqlite:///{tmp_path / 'q.db'}")
+    init_db(engine)
+    q = Queue(make_session_factory(engine))
+    q.enqueue("github", "o/r", 1, "s", "code_review")
+    claimed = []
+    lock = threading.Lock()
+    def worker():
+        job = q.claim()
+        if job is not None:
+            with lock:
+                claimed.append(job.id)
+    threads = [threading.Thread(target=worker) for _ in range(8)]
+    for t in threads: t.start()
+    for t in threads: t.join()
+    assert len(claimed) == 1   # exactly one thread claimed the single job

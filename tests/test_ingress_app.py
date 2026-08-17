@@ -71,3 +71,10 @@ def test_webhook_ignored_event_enqueues_zero(tmp_path):
     r = client.post("/webhook/github", content=body,
                     headers={"X-GitHub-Event": "pull_request"})
     assert r.json() == {"enqueued": 0}
+
+
+def test_webhook_invalid_json_400(tmp_path):
+    client = TestClient(create_app(_settings(), _queue(tmp_path), verify=False))
+    r = client.post("/webhook/github", content=b"not json",
+                    headers={"X-GitHub-Event": "pull_request"})
+    assert r.status_code == 400
