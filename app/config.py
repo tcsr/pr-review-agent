@@ -10,11 +10,32 @@ from app.models import Platform
 _VAR = re.compile(r"\$\{([A-Z0-9_]+)\}")
 
 
+class GateConfig(BaseModel):
+    enabled: bool = True
+    severity: str = "warn"
+    value: int | None = None
+    globs: list[str] | None = None
+    pattern: str | None = None
+
+
+class RulesConfig(BaseModel):
+    gates: dict[str, GateConfig] = {}
+    review_criteria: list[str] = []
+    prompt_overrides: dict[str, str] = {}
+
+
+class StacksConfig(BaseModel):
+    auto_detect: bool = True
+    packs: dict[str, bool] = {}
+
+
 class RepoConfig(BaseModel):
     platform: Platform
     full_name: str
     token: str
     tasks: list[str] | None = None
+    rules: RulesConfig | None = None
+    stacks: StacksConfig | None = None
 
 
 class LLMConfig(BaseModel):
@@ -46,6 +67,8 @@ class Settings(BaseModel):
     repos: list[RepoConfig]
     ingress: IngressConfig = IngressConfig()
     poller: PollerConfig = PollerConfig()
+    rules: RulesConfig = RulesConfig()
+    stacks: StacksConfig = StacksConfig()
 
 
 def _interpolate(obj, env: dict):
@@ -74,6 +97,14 @@ def resolve_tasks(settings: "Settings", repo_cfg: RepoConfig) -> list[str]:
     return repo_cfg.tasks if repo_cfg.tasks is not None else settings.defaults_tasks
 
 
+def resolve_rules(settings: "Settings", repo_cfg: RepoConfig) -> RulesConfig:
+    return repo_cfg.rules if repo_cfg.rules is not None else settings.rules
+
+
+def resolve_stacks(settings: "Settings", repo_cfg: RepoConfig) -> StacksConfig:
+    return repo_cfg.stacks if repo_cfg.stacks is not None else settings.stacks
+
+
 def load_settings(path: str | None = None, env: dict | None = None) -> Settings:
     env = os.environ if env is None else env
     path = path or "config.yaml"
@@ -88,6 +119,8 @@ def load_settings(path: str | None = None, env: dict | None = None) -> Settings:
             repos=[RepoConfig(**r) for r in raw.get("repos", [])],
             ingress=IngressConfig(**raw.get("ingress", {})),
             poller=PollerConfig(**raw.get("poller", {})),
+            rules=RulesConfig(**raw.get("rules", {})),
+            stacks=StacksConfig(**raw.get("stacks", {})),
         )
     except ValidationError as e:
         raise ValueError(f"Invalid config: {e}") from e
