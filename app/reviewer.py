@@ -8,6 +8,7 @@ from app.tasks.summarize import SummarizeTask
 from app.tasks.compliance import ComplianceTask
 from app.tasks.verdict import VerdictTask
 from app.tasks.triage import TriageTask
+from app.tasks.qa_reply import QaReplyTask
 from app.config import StacksConfig
 from app.stack.detect import detect_stacks
 from app.stack.packs import pack_criteria
@@ -20,10 +21,11 @@ TASK_REGISTRY: dict[str, type[Task]] = {
     "summarize": SummarizeTask,
     "compliance": ComplianceTask,
     "verdict": VerdictTask,
+    "qa_reply": QaReplyTask,
 }
 
 # Lower number runs earlier. code_review before verdict (verdict added later).
-_PRIORITY = {"triage": 1, "code_review": 0, "suggest_fixes": 3, "summarize": 5, "compliance": 7, "verdict": 9}
+_PRIORITY = {"triage": 1, "code_review": 0, "suggest_fixes": 3, "summarize": 5, "compliance": 7, "verdict": 9, "qa_reply": 4}
 
 
 class Reviewer:
