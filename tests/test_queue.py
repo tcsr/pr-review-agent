@@ -52,3 +52,20 @@ def test_fail_retries_then_dead_letters():
     assert q.claim() is None
     s = q.session_factory()
     assert s.query(DeadLetter).count() == 1
+
+
+def test_complete_marks_done():
+    q = _queue()
+    q.enqueue("github", "o/r", 1, "abc", "code_review")
+    job = q.claim()
+    q.complete(job.id)
+    with q.session_factory() as s:
+        from app.store.tables import Job
+        assert s.get(Job, job.id).status == "done"
+
+
+def test_complete_missing_job_raises():
+    import pytest
+    q = _queue()
+    with pytest.raises(ValueError):
+        q.complete(9999)

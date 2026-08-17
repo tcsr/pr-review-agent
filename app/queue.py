@@ -56,12 +56,16 @@ class Queue:
     def complete(self, job_id: int) -> None:
         with self.session_factory() as s:
             job = s.get(Job, job_id)
+            if job is None:
+                raise ValueError(f"Job {job_id} not found")
             job.status = "done"
             s.commit()
 
     def fail(self, job_id: int, error: str) -> None:
         with self.session_factory() as s:
             job = s.get(Job, job_id)
+            if job is None:
+                raise ValueError(f"Job {job_id} not found")
             job.error = error
             if job.attempts < self.max_attempts:
                 job.status = "pending"

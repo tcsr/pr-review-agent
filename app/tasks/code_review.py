@@ -32,7 +32,10 @@ class CodeReviewTask(Task):
             return TaskResult(self.name, 0)
         posted = 0
         for f in findings:
-            git.post_inline_comment(repo, pr_number, f["path"], f["line"],
-                                    f["comment"], Side.right)
-            posted += 1
+            try:
+                git.post_inline_comment(repo, pr_number, f["path"], f["line"],
+                                        f["comment"], Side.right)
+                posted += 1
+            except (KeyError, TypeError):
+                continue
         return TaskResult(self.name, posted)

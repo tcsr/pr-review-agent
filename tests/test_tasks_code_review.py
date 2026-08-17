@@ -36,3 +36,11 @@ def test_prompt_includes_diff_patch():
     CodeReviewTask().run(git, llm, "o/r", 1, git.get_pr_meta("o/r", 1), git.get_diff("o/r", 1))
     system, messages = llm.calls[0]
     assert "src/app.py" in messages[-1].content
+
+
+def test_finding_missing_key_is_skipped():
+    git = _git()
+    llm = FakeLLMAdapter(responses=[json.dumps([{"path": "src/app.py", "line": 1}])])  # no "comment"
+    res = CodeReviewTask().run(git, llm, "o/r", 1, git.get_pr_meta("o/r", 1), git.get_diff("o/r", 1))
+    assert res.posted == 0
+    assert git.inline_comments == []
