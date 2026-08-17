@@ -3,7 +3,7 @@ from __future__ import annotations
 from itertools import count
 
 from app.git.base import GitPlatformAdapter
-from app.models import PRMeta, Diff, Comment, Verdict, Side
+from app.models import PRMeta, Diff, Comment, Verdict, Side, PR, Platform
 
 
 class FakeGitAdapter(GitPlatformAdapter):
@@ -44,3 +44,11 @@ class FakeGitAdapter(GitPlatformAdapter):
         c = Comment(id=self._next_id(), author="bot", body=body)
         self.replies.append(c)
         return c.id
+
+    def list_open_prs(self, repo) -> list[PR]:
+        out = []
+        for (r, number), (meta, _diff) in self._seed.items():
+            if r == repo:
+                out.append(PR(platform=Platform.github, repo=r, number=number,
+                              head_sha=meta.head_sha))
+        return out

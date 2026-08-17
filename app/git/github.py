@@ -4,7 +4,7 @@ import re
 
 from app.git.base import GitPlatformAdapter
 from app.http import build_client, raise_for_status
-from app.models import PRMeta, Diff, FileChange, Comment, Verdict, Side
+from app.models import PRMeta, Diff, FileChange, Comment, Verdict, Side, PR, Platform
 
 _ISSUE_REF = re.compile(r"#\d+")
 
@@ -101,3 +101,8 @@ class GitHubAdapter(GitPlatformAdapter):
         # GitHub issue comments are not natively threaded; in_reply_to is accepted for interface conformance but not sent.
         r = self._post(f"/repos/{repo}/issues/{pr_number}/comments", {"body": body})
         return str(r["id"])
+
+    def list_open_prs(self, repo) -> list[PR]:
+        rows = self._get(f"/repos/{repo}/pulls?state=open")
+        return [PR(platform=Platform.github, repo=repo, number=r["number"],
+                   head_sha=r["head"]["sha"]) for r in rows]

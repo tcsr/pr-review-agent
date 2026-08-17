@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from app.models import PRMeta, Diff, Comment, Verdict, Side
+from app.models import PRMeta, Diff, Comment, Verdict, Side, PR
 
 
 class GitPlatformAdapter(ABC):
@@ -28,3 +28,6 @@ class GitPlatformAdapter(ABC):
 
     @abstractmethod
     def reply(self, repo: str, pr_number: int, in_reply_to: str, body: str) -> str: ...
+
+    @abstractmethod
+    def list_open_prs(self, repo: str) -> list[PR]: ...
