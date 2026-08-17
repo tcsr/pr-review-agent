@@ -11,6 +11,7 @@ dependencies = [
     "fastapi>=0.110",
     "uvicorn>=0.29",
     "apscheduler>=3.10",
+    "alembic>=1.13",
 ]
 
 [project.optional-dependencies]
