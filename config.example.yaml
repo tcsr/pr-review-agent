@@ -1,0 +1,15 @@
+llm:
+  provider: claude          # claude | openai | local | fake
+  model: claude-sonnet-5
+  api_key: ${LLM_API_KEY}
+  base_url: null            # set for local, e.g. http://localhost:11434/v1
+  max_tokens_per_pr: 40000
+store:
+  url: sqlite:///data/agent.db
+defaults:
+  tasks: [code_review, summarize]
+repos:
+  - platform: github
+    full_name: owner/repo
+    token: ${GITHUB_TOKEN}
+    tasks: null

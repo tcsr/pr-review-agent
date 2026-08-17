@@ -12,6 +12,15 @@ dedup, and the reviewer running `code_review` + `summarize`. No network required
 
 All tests run fully offline against fake Git and LLM adapters.
 
+## Real adapters (slice 2)
+GitHub platform adapter and Claude/OpenAI/local LLM adapters are implemented
+over httpx and selected via config (see `config.example.yaml`). All adapter
+tests run offline using `httpx.MockTransport` — no live API calls.
+
+    cp config.example.yaml config.yaml   # then set env vars
+
+Providers: `claude` (Anthropic /v1/messages), `openai` (/v1/chat/completions),
+`local` (OpenAI-compatible endpoint like Ollama), `fake` (offline default).
+
 ## Next slices
-Real GitHub/Bitbucket/GitLab adapters, Claude/OpenAI/local LLMs, webhooks +
-poller, rules/stack packs, and the admin UI — see docs/superpowers/specs.
+Webhooks + poller, rules/stack packs, additional platforms (Bitbucket/GitLab), and the admin UI — see docs/superpowers/specs.
