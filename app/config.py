@@ -20,6 +20,8 @@ class RepoConfig(BaseModel):
 class LLMConfig(BaseModel):
     provider: str = "fake"
     model: str = "fake"
+    api_key: str = ""
+    base_url: str | None = None
     max_tokens_per_pr: int = 40000
 
 
