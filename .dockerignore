@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.git/
+.gitignore
+.pytest_cache/
+tests/
+docs/
+data/
+*.db
+.superpowers/

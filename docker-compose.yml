@@ -1,0 +1,30 @@
+services:
+  agent:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - agent-data:/data
+    environment:
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  postgres:
+    image: postgres:16
+    profiles: ["postgres"]
+    environment:
+      - POSTGRES_USER=agent
+      - POSTGRES_PASSWORD=agent
+      - POSTGRES_DB=agent
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
+volumes:
+  agent-data:
+  pg-data:
