@@ -70,6 +70,10 @@ def find_repo(settings: "Settings", platform: str, full_name: str) -> RepoConfig
     return None
 
 
+def resolve_tasks(settings: "Settings", repo_cfg: RepoConfig) -> list[str]:
+    return repo_cfg.tasks if repo_cfg.tasks is not None else settings.defaults_tasks
+
+
 def load_settings(path: str | None = None, env: dict | None = None) -> Settings:
     env = os.environ if env is None else env
     path = path or "config.yaml"
