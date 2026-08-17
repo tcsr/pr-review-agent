@@ -7,7 +7,7 @@ llm:
 store:
   url: sqlite:///data/agent.db
 defaults:
-  tasks: [code_review, summarize]
+  tasks: [triage, code_review, suggest_fixes, summarize, compliance, verdict]
 rules:
   gates:
     require_linked_issue: {severity: warn}

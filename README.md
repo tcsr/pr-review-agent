@@ -55,6 +55,19 @@ Reviews are shaped by config:
 Configure under top-level `rules:`/`stacks:` (global) or per-repo `rules:`/
 `stacks:` (repo overrides global). See `config.example.yaml`.
 
+## Task roster (slice 5)
+All review tasks now available (enable per repo via `tasks:` / `defaults.tasks`):
+- `code_review` — inline findings
+- `suggest_fixes` — inline GitHub suggestion blocks
+- `summarize` — PR summary comment
+- `compliance` — gate checklist
+- `triage` — size/type labels
+- `verdict` — approve / request_changes (a failed `block` gate forces
+  request_changes without calling the LLM)
+
+Diffs are secret-redacted before any content is sent to an LLM.
+(`qa_reply` — answering @-mentions in threads — is a later slice.)
+
 ## Next slices
 Additional platforms (Bitbucket/GitLab), the admin UI, and deferred tasks
-(suggest_fixes, triage, qa_reply) — see docs/superpowers/specs.
+(qa_reply) — see docs/superpowers/specs.
