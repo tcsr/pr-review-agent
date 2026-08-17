@@ -4,11 +4,6 @@ from app.llm.base import Message
 from app.tasks.base import Task, TaskResult
 from app.tasks.code_review import _render_diff
 
-_SYSTEM = (
-    "You are a helpful PR review bot. Answer the reviewer's question about this "
-    "pull request concisely, using the diff for context."
-)
-
 
 class QaReplyTask(Task):
     name = "qa_reply"
@@ -25,9 +20,14 @@ class QaReplyTask(Task):
                 mention = c
         if mention is None:
             return TaskResult(self.name, 0)
+        system = (
+            "You are a helpful PR review bot. Answer the reviewer's question about "
+            "this pull request concisely, using the diff for context. "
+            f"Do not mention @{handle} anywhere in your reply."
+        )
         prompt = (f"Question: {mention.body}\n\nPR title: {meta.title}\n\n"
                   f"Diff:\n{_render_diff(diff)}\n\nAnswer the question.")
-        resp = llm.complete(_SYSTEM, [Message(role="user", content=prompt)], max_tokens=800)
+        resp = llm.complete(system, [Message(role="user", content=prompt)], max_tokens=800)
         if not resp.text.strip():
             return TaskResult(self.name, 0)
         git.reply(repo, pr_number, mention.id, resp.text.strip())

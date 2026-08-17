@@ -36,7 +36,9 @@ def create_app(settings, queue, verify: bool = True) -> FastAPI:
             return {"enqueued": 0}
         if event.action == "comment":
             handle = settings.bot_handle
-            if not handle or f"@{handle}" not in (event.comment_body or ""):
+            if handle and event.comment_author == handle:
+                return {"enqueued": 0}
+            if not handle or f"@{handle}".lower() not in (event.comment_body or "").lower():
                 return {"enqueued": 0}
             jobs = queue.enqueue_event(event, ["qa_reply"])
             return {"enqueued": len(jobs)}

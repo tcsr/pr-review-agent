@@ -75,3 +75,4 @@ class Event:
     head_sha: str
     action: str
     comment_body: str | None = None
+    comment_author: str | None = None

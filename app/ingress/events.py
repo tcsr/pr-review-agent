@@ -31,5 +31,6 @@ def parse_github_event(payload: dict, event_type: str | None) -> Event | None:
             head_sha=f"comment-{comment['id']}",
             action="comment",
             comment_body=comment["body"],
+            comment_author=comment.get("user", {}).get("login"),
         )
     return None

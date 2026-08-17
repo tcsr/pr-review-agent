@@ -50,3 +50,17 @@ def test_answers_latest_mention():
     assert git.replies[0].body == "answer"
     # replied to the latest mention (id "2")
     # (FakeGitAdapter.reply records the reply; the in_reply_to is exercised via the call)
+
+
+def test_system_prompt_warns_against_self_mention():
+    git = _git()
+    git.comments.append(Comment(id="42", author="alice", body="@pr-agent why?"))
+    captured = {}
+    def responder(system, msgs):
+        captured["system"] = system
+        return "Because reasons."
+    llm = FakeLLMAdapter(responder=responder)
+    QaReplyTask().run(git, llm, "o/r", 1, git.get_pr_meta("o/r", 1),
+                      git.get_diff("o/r", 1), context=ReviewContext(bot_handle="pr-agent"))
+    assert "Do not mention" in captured["system"]
+    assert "pr-agent" in captured["system"]

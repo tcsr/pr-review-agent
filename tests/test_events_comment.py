@@ -22,6 +22,7 @@ def test_pr_comment_created_maps_to_event():
     assert ev.action == "comment"
     assert ev.comment_body == "@pr-agent why?"
     assert ev.head_sha == "comment-999"
+    assert ev.comment_author == "alice"
 
 
 def test_non_pr_issue_comment_ignored():

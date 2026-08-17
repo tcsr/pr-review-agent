@@ -73,7 +73,7 @@ replies in the thread, using the diff as context. Set the handle with
 top-level `bot_handle:` in config; an empty handle disables the comment path.
 Point a GitHub `issue_comment` webhook at `/webhook/github` (same endpoint).
 Comment events enqueue only the `qa_reply` task, and only when the bot is
-mentioned.
+mentioned. Replies are posted as standard PR comments (GitHub's REST API does not support nested comment threads).
 
 ## Next slices
 Additional platforms (Bitbucket/GitLab), the admin UI, and deferred tasks

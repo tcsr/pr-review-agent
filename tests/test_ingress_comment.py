@@ -52,3 +52,23 @@ def test_comment_ignored_when_no_bot_handle(tmp_path):
     r = client.post("/webhook/github", content=_comment_body(),
                     headers={"X-GitHub-Event": "issue_comment"})
     assert r.json() == {"enqueued": 0}
+
+
+def test_bot_own_comment_not_enqueued(tmp_path):
+    q = _queue(tmp_path)
+    client = TestClient(create_app(_settings(), q, verify=False))
+    body = json.dumps({"action": "created", "repository": {"full_name": "o/r"},
+                       "issue": {"number": 5, "pull_request": {"url": "x"}},
+                       "comment": {"id": 8, "body": "@pr-agent see above",
+                                   "user": {"login": "pr-agent"}}}).encode()
+    r = client.post("/webhook/github", content=body,
+                    headers={"X-GitHub-Event": "issue_comment"})
+    assert r.json() == {"enqueued": 0}
+
+
+def test_uppercase_mention_enqueues(tmp_path):
+    q = _queue(tmp_path)
+    client = TestClient(create_app(_settings(), q, verify=False))
+    r = client.post("/webhook/github", content=_comment_body("@PR-AGENT why?"),
+                    headers={"X-GitHub-Event": "issue_comment"})
+    assert r.json() == {"enqueued": 1}
