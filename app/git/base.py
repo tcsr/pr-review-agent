@@ -31,3 +31,9 @@ class GitPlatformAdapter(ABC):
 
     @abstractmethod
     def list_open_prs(self, repo: str) -> list[PR]: ...
+
+    @abstractmethod
+    def add_labels(self, repo: str, pr_number: int, labels: list[str]) -> None: ...
+
+    @abstractmethod
+    def assign_reviewers(self, repo: str, pr_number: int, reviewers: list[str]) -> None: ...

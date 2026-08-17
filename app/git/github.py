@@ -106,3 +106,10 @@ class GitHubAdapter(GitPlatformAdapter):
         rows = self._get(f"/repos/{repo}/pulls?state=open")
         return [PR(platform=Platform.github, repo=repo, number=r["number"],
                    head_sha=r["head"]["sha"]) for r in rows]
+
+    def add_labels(self, repo, pr_number, labels) -> None:
+        self._post(f"/repos/{repo}/issues/{pr_number}/labels", {"labels": labels})
+
+    def assign_reviewers(self, repo, pr_number, reviewers) -> None:
+        self._post(f"/repos/{repo}/pulls/{pr_number}/requested_reviewers",
+                   {"reviewers": reviewers})

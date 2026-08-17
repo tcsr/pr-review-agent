@@ -13,6 +13,8 @@ class FakeGitAdapter(GitPlatformAdapter):
         self.inline_comments: list[Comment] = []
         self.verdicts: list[tuple[Verdict, str]] = []
         self.replies: list[Comment] = []
+        self.labels: list[str] = []
+        self.reviewers: list[str] = []
         self._ids = count(1)
 
     def _next_id(self) -> str:
@@ -52,3 +54,9 @@ class FakeGitAdapter(GitPlatformAdapter):
                 out.append(PR(platform=Platform.github, repo=r, number=number,
                               head_sha=meta.head_sha))
         return out
+
+    def add_labels(self, repo, pr_number, labels) -> None:
+        self.labels.extend(labels)
+
+    def assign_reviewers(self, repo, pr_number, reviewers) -> None:
+        self.reviewers.extend(reviewers)
