@@ -8,6 +8,7 @@ from app.tasks.compliance import ComplianceTask
 from app.config import StacksConfig
 from app.stack.detect import detect_stacks
 from app.stack.packs import pack_criteria
+from app.redact import redact_diff
 
 TASK_REGISTRY: dict[str, type[Task]] = {
     "code_review": CodeReviewTask,
@@ -28,7 +29,7 @@ class Reviewer:
         selected = [t for t in tasks if t in TASK_REGISTRY]
         selected.sort(key=lambda t: _PRIORITY.get(t, 100))
         meta = self.git.get_pr_meta(repo, pr_number)
-        diff = self.git.get_diff(repo, pr_number)
+        diff = redact_diff(self.git.get_diff(repo, pr_number))
         stacks = detect_stacks(diff)
         criteria = (list(rules.review_criteria) if rules else [])
         criteria += pack_criteria(stacks, stacks_cfg or StacksConfig())
