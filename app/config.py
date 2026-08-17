@@ -29,11 +29,23 @@ class StoreConfig(BaseModel):
     url: str = "sqlite:///data/agent.db"
 
 
+class IngressConfig(BaseModel):
+    enabled: bool = True
+    webhook_secret: str = ""
+
+
+class PollerConfig(BaseModel):
+    enabled: bool = True
+    interval_seconds: int = 60
+
+
 class Settings(BaseModel):
     llm: LLMConfig
     store: StoreConfig
     defaults_tasks: list[str]
     repos: list[RepoConfig]
+    ingress: IngressConfig = IngressConfig()
+    poller: PollerConfig = PollerConfig()
 
 
 def _interpolate(obj, env: dict):
@@ -63,6 +75,8 @@ def load_settings(path: str | None = None, env: dict | None = None) -> Settings:
             store=StoreConfig(**raw.get("store", {})),
             defaults_tasks=raw["defaults"]["tasks"],
             repos=[RepoConfig(**r) for r in raw.get("repos", [])],
+            ingress=IngressConfig(**raw.get("ingress", {})),
+            poller=PollerConfig(**raw.get("poller", {})),
         )
     except ValidationError as e:
         raise ValueError(f"Invalid config: {e}") from e

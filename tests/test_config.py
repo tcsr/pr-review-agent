@@ -68,3 +68,15 @@ repos: []
     s = load_settings(path, env={"OAI": "sk-test"})
     assert s.llm.api_key == "sk-test"
     assert s.llm.base_url == "http://localhost:11434/v1"
+
+
+def test_ingress_and_poller_defaults(tmp_path):
+    path = _write(tmp_path, """
+llm: {provider: fake, model: fake}
+store: {url: 'sqlite:///:memory:'}
+defaults: {tasks: [code_review]}
+repos: []
+""")
+    s = load_settings(path, env={})
+    assert s.ingress.enabled is True
+    assert s.poller.interval_seconds == 60

@@ -8,6 +8,9 @@ dependencies = [
     "pydantic>=2.6",
     "pydantic-settings>=2.2",
     "pyyaml>=6.0",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "apscheduler>=3.10",
 ]
 
 [project.optional-dependencies]
