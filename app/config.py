@@ -63,6 +63,13 @@ def _interpolate(obj, env: dict):
     return obj
 
 
+def find_repo(settings: "Settings", platform: str, full_name: str) -> RepoConfig | None:
+    for r in settings.repos:
+        if r.platform.value == platform and r.full_name == full_name:
+            return r
+    return None
+
+
 def load_settings(path: str | None = None, env: dict | None = None) -> Settings:
     env = os.environ if env is None else env
     path = path or "config.yaml"
