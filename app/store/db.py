@@ -6,9 +6,12 @@ from sqlalchemy.orm import sessionmaker
 from app.store.tables import Base
 
 
+def _connect_args_for(url: str) -> dict:
+    return {"timeout": 30} if url.startswith("sqlite") else {}
+
+
 def make_engine(url: str):
-    connect_args = {"timeout": 30} if url.startswith("sqlite") else {}
-    return create_engine(url, future=True, connect_args=connect_args)
+    return create_engine(url, future=True, connect_args=_connect_args_for(url))
 
 
 def make_session_factory(engine):
