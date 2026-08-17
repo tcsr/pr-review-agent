@@ -10,7 +10,7 @@ _SYSTEM = "Summarize this pull request in 3-5 sentences: what changed and why."
 class SummarizeTask(Task):
     name = "summarize"
 
-    def run(self, git, llm, repo, pr_number, meta, diff) -> TaskResult:
+    def run(self, git, llm, repo, pr_number, meta, diff, context=None) -> TaskResult:
         prompt = f"Title: {meta.title}\nDescription: {meta.body}\n\nDiff:\n{_render_diff(diff)}"
         resp = llm.complete(_SYSTEM, [Message(role="user", content=prompt)], max_tokens=800)
         if not resp.text.strip():

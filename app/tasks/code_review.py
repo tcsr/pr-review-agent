@@ -19,11 +19,14 @@ def _render_diff(diff) -> str:
 class CodeReviewTask(Task):
     name = "code_review"
 
-    def run(self, git, llm, repo, pr_number, meta, diff) -> TaskResult:
+    def run(self, git, llm, repo, pr_number, meta, diff, context=None) -> TaskResult:
         prompt = (
             f"PR title: {meta.title}\n\nDiff:\n{_render_diff(diff)}\n\n"
             "List review findings as JSON."
         )
+        if context and context.review_criteria:
+            bullets = "\n".join(f"- {c}" for c in context.review_criteria)
+            prompt += f"\n\nAdditional review criteria:\n{bullets}"
         resp = llm.complete(_SYSTEM, [Message(role="user", content=prompt)], max_tokens=2000)
         try:
             findings = json.loads(resp.text)
