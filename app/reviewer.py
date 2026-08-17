@@ -31,7 +31,7 @@ class Reviewer:
         self.git = git
         self.llm = llm
 
-    def review(self, repo: str, pr_number: int, tasks: list[str], rules=None, stacks_cfg=None) -> list[TaskResult]:
+    def review(self, repo: str, pr_number: int, tasks: list[str], rules=None, stacks_cfg=None, bot_handle="") -> list[TaskResult]:
         selected = [t for t in tasks if t in TASK_REGISTRY]
         selected.sort(key=lambda t: _PRIORITY.get(t, 100))
         meta = self.git.get_pr_meta(repo, pr_number)
@@ -40,7 +40,8 @@ class Reviewer:
         criteria = (list(rules.review_criteria) if rules else [])
         criteria += pack_criteria(stacks, stacks_cfg or StacksConfig())
         gates = rules.gates if rules else {}
-        context = ReviewContext(review_criteria=criteria, gates=gates, stacks=stacks)
+        context = ReviewContext(review_criteria=criteria, gates=gates, stacks=stacks,
+                                bot_handle=bot_handle)
         results: list[TaskResult] = []
         for name in selected:
             task = TASK_REGISTRY[name]()

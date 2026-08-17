@@ -69,6 +69,7 @@ class Settings(BaseModel):
     poller: PollerConfig = PollerConfig()
     rules: RulesConfig = RulesConfig()
     stacks: StacksConfig = StacksConfig()
+    bot_handle: str = ""
 
 
 def _interpolate(obj, env: dict):
@@ -121,6 +122,7 @@ def load_settings(path: str | None = None, env: dict | None = None) -> Settings:
             poller=PollerConfig(**raw.get("poller", {})),
             rules=RulesConfig(**raw.get("rules", {})),
             stacks=StacksConfig(**raw.get("stacks", {})),
+            bot_handle=raw.get("bot_handle", ""),
         )
     except ValidationError as e:
         raise ValueError(f"Invalid config: {e}") from e
