@@ -20,13 +20,14 @@ anywhere Docker runs — including fully offline on localhost.
   services.
 - Fully runnable and testable on localhost, offline, with no accounts.
 - Deterministic dedup: never post duplicate reviews for the same commit.
+- Bundled optional admin UI for dashboard, config, and job management (§6c).
 
 ### Non-Goals
 - Not a CI system; it does not run the project's test suite. It *checks whether*
   CI/tests exist and pass (via platform status API), but does not execute them.
 - Not a merge-bot; it sets review verdicts but does not auto-merge (out of scope
   v1; can be added later).
-- No web UI in v1. Configuration is file + env. (A dashboard is a future item.)
+- No multi-user auth / RBAC in v1 (single admin only; §6c).
 
 ## 3. Architecture
 
@@ -78,6 +79,9 @@ reviewer, tasks) never references a concrete provider.
 | `app/rules` | load + evaluate deterministic gates and NL review criteria; merge by precedence | store, GitAdapter |
 | `app/stack_detect` | infer stacks from changed files + manifests | git/models |
 | `app/packs` | built-in per-stack rulepacks (criteria/prompt files) + loader | rules |
+| `app/ui` | server-rendered admin UI (FastAPI + Jinja/HTMX + Tailwind) | store, config, queue |
+| `app/api` | JSON endpoints backing the UI (and future SPA/CLI) | store, queue |
+| `app/auth` | single-admin auth (session cookie), guards UI + API | config |
 
 ### 4.1 `GitPlatformAdapter` interface
 
@@ -227,6 +231,38 @@ CSS/SCSS. Examples:
 Teams override or disable any pack (see config). Packs are plain files, so new
 stacks are added without code changes.
 
+## 6c. Admin UI
+
+Server-rendered, bundled in the same container (no separate Node build) — keeps
+the "single container, deploy anywhere" property. Stack: FastAPI + Jinja2 +
+HTMX + Tailwind (CDN or prebuilt CSS). Backed by `app/api` JSON endpoints so a
+React SPA or CLI can be added later without rework.
+
+### Screens
+- **Dashboard** — repos, recent PRs reviewed, job counts by status, dead-letter
+  count, LLM cost today.
+- **PR detail** — per-PR: detected stacks, task results, what was posted, gate
+  pass/fail, token usage, **re-run** button (enqueues fresh jobs for head_sha).
+- **Repos** — add/remove repo, set platform + token, toggle tasks, choose LLM
+  override per repo.
+- **Rules** — edit global gates (enable, severity block/warn) and NL criteria;
+  enable/disable stack packs. Writes back to config store.
+- **Jobs** — live queue + dead-letter, retry a failed job.
+- **Settings** — LLM provider/model, poller interval, change admin password.
+
+### Auth (`app/auth`)
+Single-admin, session-cookie login. Credentials from env
+(`ADMIN_USER` / `ADMIN_PASSWORD_HASH`). All UI routes and mutating API routes
+require the session; webhook routes are exempt (own HMAC verify). No multi-user
+system in v1 (deferred). Passwords hashed (argon2/bcrypt); cookie is httponly +
+secure.
+
+### Notes
+- UI is optional: `ui.enabled: false` runs the service headless (config-file
+  only), preserving the pure-backend deploy.
+- Config edits made in the UI persist to the store and are reconciled with
+  `config.yaml` on startup (file is the seed; DB is the live source once running).
+
 ## 7. Configuration
 
 Single `config.yaml`; secrets via env interpolation (`${VAR}`).
@@ -252,6 +288,11 @@ ingress:
 poller:
   enabled: true
   interval_seconds: 60
+
+ui:
+  enabled: true
+  admin_user: ${ADMIN_USER}
+  admin_password_hash: ${ADMIN_PASSWORD_HASH}   # argon2/bcrypt hash
 
 defaults:
   tasks: [code_review, summarize, suggest_fixes, verdict, compliance, triage, qa_reply]
@@ -358,13 +399,16 @@ SQLite and Postgres share the same models. Migrations via Alembic.
 7. Claude + OpenAI + local LLM adapters.
 8. Ingress (webhooks + signature verify) and poller.
 9. Bitbucket + GitLab adapters.
-10. Dockerfile, compose, Alembic migrations, docs.
-11. (Future) Optional native-linter integration (eslint/ruff/checkstyle/…).
+10. `app/api` JSON endpoints + `app/auth` single-admin login.
+11. Admin UI (dashboard, PR detail, repos, rules, jobs, settings).
+12. Dockerfile, compose, Alembic migrations, docs.
+13. (Future) Optional native-linter integration (eslint/ruff/checkstyle/…).
 
 ## 12. Open questions / future
 
 - Auto-merge on approval (deferred).
 - Web dashboard for status/metrics (deferred).
-- Native-linter integration as ground-truth for the LLM (deferred, milestone 11).
+- Native-linter integration as ground-truth for the LLM (deferred, milestone 13).
+- Multi-user auth / RBAC and optional React SPA on top of `app/api` (deferred).
 - Rulepack marketplace / sharing across orgs (deferred; packs are files, so this
   is additive later).
