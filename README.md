@@ -66,8 +66,15 @@ All review tasks now available (enable per repo via `tasks:` / `defaults.tasks`)
   request_changes without calling the LLM)
 
 Diffs are secret-redacted before any content is sent to an LLM.
-(`qa_reply` — answering @-mentions in threads — is a later slice.)
+
+## Q&A replies (slice 6)
+Mention the bot in a PR comment (e.g. `@pr-agent why this change?`) and it
+replies in the thread, using the diff as context. Set the handle with
+top-level `bot_handle:` in config; an empty handle disables the comment path.
+Point a GitHub `issue_comment` webhook at `/webhook/github` (same endpoint).
+Comment events enqueue only the `qa_reply` task, and only when the bot is
+mentioned.
 
 ## Next slices
 Additional platforms (Bitbucket/GitLab), the admin UI, and deferred tasks
-(qa_reply) — see docs/superpowers/specs.
+— see docs/superpowers/specs.
