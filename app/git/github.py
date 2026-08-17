@@ -70,16 +70,26 @@ class GitHubAdapter(GitPlatformAdapter):
 
     # write methods added in Task 3
     def post_comment(self, repo, pr_number, body) -> str:
-        raise NotImplementedError
+        r = self._post(f"/repos/{repo}/issues/{pr_number}/comments", {"body": body})
+        return str(r["id"])
 
     def post_inline_comment(self, repo, pr_number, path, line, body, side: Side) -> str:
-        raise NotImplementedError
+        commit_id = self.get_pr_meta(repo, pr_number).head_sha
+        r = self._post(f"/repos/{repo}/pulls/{pr_number}/comments", {
+            "body": body, "path": path, "line": line,
+            "side": side.name.upper(), "commit_id": commit_id,
+        })
+        return str(r["id"])
 
     def set_review_verdict(self, repo, pr_number, verdict: Verdict, body) -> None:
-        raise NotImplementedError
+        self._post(f"/repos/{repo}/pulls/{pr_number}/reviews",
+                   {"event": _VERDICT_EVENT[verdict], "body": body})
 
     def get_thread(self, repo, pr_number) -> list[Comment]:
-        raise NotImplementedError
+        rows = self._get(f"/repos/{repo}/issues/{pr_number}/comments")
+        return [Comment(id=str(c["id"]), author=c.get("user", {}).get("login", ""),
+                        body=c.get("body", "")) for c in rows]
 
     def reply(self, repo, pr_number, in_reply_to, body) -> str:
-        raise NotImplementedError
+        r = self._post(f"/repos/{repo}/issues/{pr_number}/comments", {"body": body})
+        return str(r["id"])
