@@ -5,6 +5,7 @@ from app.tasks.base import Task, TaskResult
 from app.tasks.code_review import CodeReviewTask
 from app.tasks.summarize import SummarizeTask
 from app.tasks.compliance import ComplianceTask
+from app.tasks.verdict import VerdictTask
 from app.config import StacksConfig
 from app.stack.detect import detect_stacks
 from app.stack.packs import pack_criteria
@@ -14,6 +15,7 @@ TASK_REGISTRY: dict[str, type[Task]] = {
     "code_review": CodeReviewTask,
     "summarize": SummarizeTask,
     "compliance": ComplianceTask,
+    "verdict": VerdictTask,
 }
 
 # Lower number runs earlier. code_review before verdict (verdict added later).
