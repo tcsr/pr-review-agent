@@ -8,8 +8,23 @@ store:
   url: sqlite:///data/agent.db
 defaults:
   tasks: [code_review, summarize]
+rules:
+  gates:
+    require_linked_issue: {severity: warn}
+    ci_must_pass: {severity: block}
+  review_criteria:
+    - "No debug prints or console.log statements."
+    - "Add tests for new features."
+stacks:
+  auto_detect: true
+  packs: {}                 # override with {angular: false} to disable
 repos:
   - platform: github
     full_name: owner/repo
     token: ${GITHUB_TOKEN}
     tasks: null
+    rules:                  # override global rules
+      gates:
+        require_pr_description: {severity: warn}
+    stacks:                 # override global stacks
+      packs: {angular: false}

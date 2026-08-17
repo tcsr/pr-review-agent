@@ -41,5 +41,20 @@ interval as a fallback.
 All ingress/worker/poller logic is tested offline (FastAPI TestClient +
 httpx.MockTransport); no network in the test suite.
 
+## Rules & stacks (slice 4)
+Reviews are shaped by config:
+- **Gates** (deterministic, `block`|`warn`): `require_linked_issue`,
+  `require_pr_description`, `max_changed_files`, `require_tests_for`,
+  `title_regex`, `ci_must_pass`. The `compliance` task posts a checklist.
+- **Review criteria** (natural language) are injected into the `code_review`
+  prompt.
+- **Stack packs** auto-apply when a stack is detected from changed files
+  (Angular, React, Next, NestJS, Node, Java, Python, JS, TS, CSS); disable one
+  with `stacks.packs: {angular: false}`.
+
+Configure under top-level `rules:`/`stacks:` (global) or per-repo `rules:`/
+`stacks:` (repo overrides global). See `config.example.yaml`.
+
 ## Next slices
-Webhooks + poller, rules/stack packs, additional platforms (Bitbucket/GitLab), and the admin UI — see docs/superpowers/specs.
+Additional platforms (Bitbucket/GitLab), the admin UI, and deferred tasks
+(suggest_fixes, triage, qa_reply) — see docs/superpowers/specs.
