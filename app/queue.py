@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 
 from app.models import Event
 from app.store.tables import Job, DeadLetter
@@ -74,3 +74,39 @@ class Queue:
                 job.status = "failed"
                 s.add(DeadLetter(job_id=job.id, last_error=error))
             s.commit()
+
+    def stats(self) -> dict:
+        out = {"pending": 0, "in_progress": 0, "done": 0, "failed": 0}
+        with self.session_factory() as s:
+            rows = s.execute(select(Job.status, func.count()).group_by(Job.status)).all()
+        for status, count in rows:
+            out[status] = count
+        return out
+
+    def _job_dict(self, j) -> dict:
+        return {"id": j.id, "platform": j.platform, "repo": j.repo,
+                "pr_number": j.pr_number, "head_sha": j.head_sha, "task": j.task,
+                "status": j.status, "attempts": j.attempts, "error": j.error}
+
+    def list_jobs(self, limit: int = 50) -> list[dict]:
+        with self.session_factory() as s:
+            rows = s.execute(select(Job).order_by(Job.id.desc()).limit(limit)).scalars().all()
+            return [self._job_dict(j) for j in rows]
+
+    def list_dead_letter(self, limit: int = 50) -> list[dict]:
+        with self.session_factory() as s:
+            rows = s.execute(
+                select(DeadLetter).order_by(DeadLetter.id.desc()).limit(limit)
+            ).scalars().all()
+            return [{"id": d.id, "job_id": d.job_id, "last_error": d.last_error} for d in rows]
+
+    def requeue(self, job_id: int) -> bool:
+        with self.session_factory() as s:
+            job = s.get(Job, job_id)
+            if job is None:
+                return False
+            job.status = "pending"
+            job.attempts = 0
+            job.error = None
+            s.commit()
+            return True
