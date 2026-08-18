@@ -45,4 +45,10 @@ def create_app(settings, queue, verify: bool = True) -> FastAPI:
         jobs = queue.enqueue_event(event, resolve_tasks(settings, repo_cfg))
         return {"enqueued": len(jobs)}
 
+    if settings.ui.enabled:
+        from app.api import build_api_router
+        from app.ui import build_ui_router
+        app.include_router(build_api_router(settings, queue))
+        app.include_router(build_ui_router(settings, queue))
+
     return app

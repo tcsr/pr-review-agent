@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/htmx.org@1.9.12"></script></head>
+<body class="bg-gray-50 p-8">
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-2xl font-bold">PR Review Agent — Dashboard</h1>
+  <a href="/admin/logout" class="text-blue-600">Log out</a>
+</div>
+<div class="grid grid-cols-4 gap-4 mb-8">
+  {% for k, v in stats.items() %}
+  <div class="bg-white p-4 rounded shadow"><div class="text-gray-500 text-sm">{{ k }}</div>
+    <div class="text-2xl font-semibold">{{ v }}</div></div>
+  {% endfor %}
+</div>
+<h2 class="text-lg font-semibold mb-2">Recent jobs</h2>
+<table class="w-full bg-white rounded shadow text-sm">
+  <thead><tr class="text-left border-b"><th class="p-2">#</th><th>repo</th><th>PR</th>
+    <th>task</th><th>status</th><th>attempts</th><th></th></tr></thead>
+  <tbody>
+  {% for j in jobs %}
+    <tr class="border-b">
+      <td class="p-2">{{ j.id }}</td><td>{{ j.repo }}</td><td>{{ j.pr_number }}</td>
+      <td>{{ j.task }}</td><td>{{ j.status }}</td><td>{{ j.attempts }}</td>
+      <td><button hx-post="/api/jobs/{{ j.id }}/rerun" hx-swap="none"
+          class="text-blue-600">re-run</button></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></body></html>
