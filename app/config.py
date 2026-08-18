@@ -60,6 +60,13 @@ class PollerConfig(BaseModel):
     interval_seconds: int = 60
 
 
+class UIConfig(BaseModel):
+    enabled: bool = True
+    admin_user: str = ""
+    admin_password_hash: str = ""
+    session_secret: str = "change-me"
+
+
 class Settings(BaseModel):
     llm: LLMConfig
     store: StoreConfig
@@ -69,6 +76,7 @@ class Settings(BaseModel):
     poller: PollerConfig = PollerConfig()
     rules: RulesConfig = RulesConfig()
     stacks: StacksConfig = StacksConfig()
+    ui: UIConfig = UIConfig()
     bot_handle: str = ""
 
 
@@ -122,6 +130,7 @@ def load_settings(path: str | None = None, env: dict | None = None) -> Settings:
             poller=PollerConfig(**raw.get("poller", {})),
             rules=RulesConfig(**raw.get("rules", {})),
             stacks=StacksConfig(**raw.get("stacks", {})),
+            ui=UIConfig(**raw.get("ui", {})),
             bot_handle=raw.get("bot_handle", ""),
         )
     except ValidationError as e:
