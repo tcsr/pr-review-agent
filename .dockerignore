@@ -8,3 +8,5 @@ docs/
 data/
 *.db
 .superpowers/
+.env
+.env.*

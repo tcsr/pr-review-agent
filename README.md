@@ -76,7 +76,7 @@ Comment events enqueue only the `qa_reply` task, and only when the bot is
 mentioned. Replies are posted as standard PR comments (GitHub's REST API does not support nested comment threads).
 
 ## Deployment (slice 7)
-Run in Docker; the container migrates the schema on startup, then serves.
+Run in Docker; the container migrates the schema on startup, then serves. The image bakes `config.example.yaml` as a default `config.yaml`; mount your own over `/app/config.yaml` (compose does this) to customize.
 
     cp config.example.yaml config.yaml     # set env vars: LLM_API_KEY, GITHUB_TOKEN, WEBHOOK_SECRET
     docker compose up --build              # serves on :8000 with SQLite (volume: agent-data)

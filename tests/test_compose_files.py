@@ -35,3 +35,15 @@ def test_compose_has_postgres_profile():
     data = yaml.safe_load(_read("docker-compose.yml"))
     assert "postgres" in data["services"]
     assert "profiles" in data["services"]["postgres"]
+
+
+def test_dockerfile_bakes_config_and_installs_postgres():
+    df = _read("Dockerfile")
+    assert "config.yaml" in df
+    assert "[postgres]" in df
+
+
+def test_compose_mounts_config():
+    data = yaml.safe_load(_read("docker-compose.yml"))
+    vols = data["services"]["agent"].get("volumes", [])
+    assert any("config.yaml" in str(v) for v in vols)
