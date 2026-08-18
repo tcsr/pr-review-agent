@@ -35,8 +35,10 @@ def run(config_path: str = "config.yaml") -> None:  # pragma: no cover
     import uvicorn
     from apscheduler.schedulers.background import BackgroundScheduler
     from app.migrate import run_migrations
+    from app.config import validate_ui_settings
 
     settings = load_settings(config_path)
+    validate_ui_settings(settings)
     run_migrations(settings.store.url)
     app, queue = build_app(settings)
 

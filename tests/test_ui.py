@@ -61,3 +61,11 @@ def test_ui_disabled_no_admin_route(tmp_path):
     assert c.get("/admin/login").status_code == 404
     # health still works
     assert c.get("/health").json() == {"status": "ok"}
+
+
+def test_login_cookie_has_max_age(tmp_path):
+    c = TestClient(create_app(_settings(), _queue(tmp_path), verify=False))
+    r = c.post("/admin/login", data={"username": "admin", "password": "pw"},
+               follow_redirects=False)
+    set_cookie = r.headers.get("set-cookie", "")
+    assert "Max-Age" in set_cookie or "max-age" in set_cookie

@@ -33,4 +33,6 @@ ui:
   enabled: true
   admin_user: admin
   admin_password_hash: ${ADMIN_PASSWORD_HASH}   # generate: python -c "from app.auth import hash_password; print(hash_password('yourpassword'))"
-  session_secret: ${SESSION_SECRET}
+  session_secret: ${SESSION_SECRET}             # generate: python -c "import secrets; print(secrets.token_hex(32))"
+  cookie_secure: false                          # set to true when served over HTTPS
+  cookie_max_age: 86400                         # session lifetime in seconds (1 day default)

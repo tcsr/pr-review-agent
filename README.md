@@ -101,6 +101,8 @@ in config. The dashboard shows queue stats and recent jobs with a re-run action;
 a JSON API lives under `/api/*`. All `/admin` and `/api` routes require login;
 webhooks and `/health` stay public. Set `ui.enabled: false` to run headless.
 
+**Production:** set `ui.session_secret` to a random value (`python -c "import secrets; print(secrets.token_hex(32))"`), set `ui.cookie_secure: true` when served over HTTPS, and set a strong `ui.admin_password_hash`. The service refuses to start with `ui.enabled` and an unset/default session_secret or missing admin credentials.
+
 ## Next slices
 Additional platforms (Bitbucket/GitLab) and deferred tasks
 — see docs/superpowers/specs.

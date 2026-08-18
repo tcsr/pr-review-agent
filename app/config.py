@@ -65,6 +65,8 @@ class UIConfig(BaseModel):
     admin_user: str = ""
     admin_password_hash: str = ""
     session_secret: str = "change-me"
+    cookie_secure: bool = False
+    cookie_max_age: int = 86400
 
 
 class Settings(BaseModel):
@@ -112,6 +114,16 @@ def resolve_rules(settings: "Settings", repo_cfg: RepoConfig) -> RulesConfig:
 
 def resolve_stacks(settings: "Settings", repo_cfg: RepoConfig) -> StacksConfig:
     return repo_cfg.stacks if repo_cfg.stacks is not None else settings.stacks
+
+
+def validate_ui_settings(settings: "Settings") -> None:
+    ui = settings.ui
+    if not ui.enabled:
+        return
+    if ui.session_secret in ("", "change-me"):
+        raise ValueError("ui.session_secret must be set to a random value (not the default) when ui.enabled")
+    if not ui.admin_user or not ui.admin_password_hash:
+        raise ValueError("ui.admin_user and ui.admin_password_hash are required when ui.enabled")
 
 
 def load_settings(path: str | None = None, env: dict | None = None) -> Settings:

@@ -32,7 +32,8 @@ def build_ui_router(settings, queue) -> APIRouter:
                 request, "login.html", {"error": "Invalid credentials"}, status_code=401)
         resp = RedirectResponse("/admin", status_code=303)
         resp.set_cookie("session", make_session_token(username, secret),
-                        httponly=True, samesite="lax")
+                        httponly=True, samesite="lax", secure=settings.ui.cookie_secure,
+                        max_age=settings.ui.cookie_max_age)
         return resp
 
     @router.get("/logout")
