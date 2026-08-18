@@ -29,3 +29,8 @@ repos:
         require_pr_description: {severity: warn}
     stacks:                 # override global stacks
       packs: {angular: false}
+ui:
+  enabled: true
+  admin_user: admin
+  admin_password_hash: ${ADMIN_PASSWORD_HASH}   # generate: python -c "from app.auth import hash_password; print(hash_password('yourpassword'))"
+  session_secret: ${SESSION_SECRET}

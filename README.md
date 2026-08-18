@@ -90,6 +90,17 @@ Schema is managed by Alembic (`alembic/versions/`); migrations run automatically
 on startup. The DB-backed queue lets multiple `agent` containers share one
 Postgres and coordinate via atomic job claims.
 
+## Admin UI (slice 8)
+A bundled admin dashboard is served at `/admin` (set `ui.enabled: true`).
+Generate a password hash:
+
+    python -c "from app.auth import hash_password; print(hash_password('yourpassword'))"
+
+Set `ui.admin_user`, `ui.admin_password_hash`, and a random `ui.session_secret`
+in config. The dashboard shows queue stats and recent jobs with a re-run action;
+a JSON API lives under `/api/*`. All `/admin` and `/api` routes require login;
+webhooks and `/health` stay public. Set `ui.enabled: false` to run headless.
+
 ## Next slices
-Additional platforms (Bitbucket/GitLab), the admin UI, and deferred tasks
+Additional platforms (Bitbucket/GitLab) and deferred tasks
 — see docs/superpowers/specs.
