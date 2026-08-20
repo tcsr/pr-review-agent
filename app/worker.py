@@ -20,7 +20,9 @@ def process_one(queue, settings, transport_git=None, transport_llm=None) -> bool
         stacks_cfg = resolve_stacks(settings, repo_cfg)
         Reviewer(git, llm).review(job.repo, job.pr_number, [job.task],
                                   rules=rules, stacks_cfg=stacks_cfg,
-                                  bot_handle=settings.bot_handle)
+                                  bot_handle=settings.bot_handle,
+                                  max_tokens_per_pr=settings.llm.max_tokens_per_pr,
+                                  skip_globs=settings.skip_globs)
         queue.complete(job.id)
     except Exception as e:  # worker never crashes the loop
         queue.fail(job.id, str(e))

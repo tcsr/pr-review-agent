@@ -13,6 +13,7 @@ from app.config import StacksConfig
 from app.stack.detect import detect_stacks
 from app.stack.packs import pack_criteria
 from app.redact import redact_diff
+from app.budget import apply_budget
 
 TASK_REGISTRY: dict[str, type[Task]] = {
     "triage": TriageTask,
@@ -33,17 +34,22 @@ class Reviewer:
         self.git = git
         self.llm = llm
 
-    def review(self, repo: str, pr_number: int, tasks: list[str], rules=None, stacks_cfg=None, bot_handle="") -> list[TaskResult]:
+    def review(self, repo: str, pr_number: int, tasks: list[str], rules=None, stacks_cfg=None, bot_handle="",
+               max_tokens_per_pr=None, skip_globs=None) -> list[TaskResult]:
         selected = [t for t in tasks if t in TASK_REGISTRY]
         selected.sort(key=lambda t: _PRIORITY.get(t, 100))
         meta = self.git.get_pr_meta(repo, pr_number)
         diff = redact_diff(self.git.get_diff(repo, pr_number))
+        truncated = False
+        if max_tokens_per_pr is not None:
+            diff, truncated = apply_budget(diff, self.llm.count_tokens,
+                                           max_tokens_per_pr, skip_globs or [])
         stacks = detect_stacks(diff)
         criteria = (list(rules.review_criteria) if rules else [])
         criteria += pack_criteria(stacks, stacks_cfg or StacksConfig())
         gates = rules.gates if rules else {}
         context = ReviewContext(review_criteria=criteria, gates=gates, stacks=stacks,
-                                bot_handle=bot_handle)
+                                bot_handle=bot_handle, truncated=truncated)
         results: list[TaskResult] = []
         for name in selected:
             task = TASK_REGISTRY[name]()

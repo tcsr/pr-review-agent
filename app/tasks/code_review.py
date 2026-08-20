@@ -27,6 +27,9 @@ class CodeReviewTask(Task):
         if context and context.review_criteria:
             bullets = "\n".join(f"- {c}" for c in context.review_criteria)
             prompt += f"\n\nAdditional review criteria:\n{bullets}"
+        if context and getattr(context, "truncated", False):
+            prompt += ("\n\nNote: the diff was truncated to fit the token budget; "
+                       "some files were not reviewed.")
         resp = llm.complete(_SYSTEM, [Message(role="user", content=prompt)], max_tokens=2000)
         try:
             findings = json.loads(resp.text)

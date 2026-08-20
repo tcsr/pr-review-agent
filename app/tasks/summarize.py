@@ -12,6 +12,9 @@ class SummarizeTask(Task):
 
     def run(self, git, llm, repo, pr_number, meta, diff, context=None) -> TaskResult:
         prompt = f"Title: {meta.title}\nDescription: {meta.body}\n\nDiff:\n{_render_diff(diff)}"
+        if context and getattr(context, "truncated", False):
+            prompt += ("\n\nNote: the diff was truncated to fit the token budget; "
+                       "some files were not reviewed.")
         resp = llm.complete(_SYSTEM, [Message(role="user", content=prompt)], max_tokens=800)
         if not resp.text.strip():
             return TaskResult(self.name, 0)
