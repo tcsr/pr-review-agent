@@ -80,6 +80,7 @@ class Settings(BaseModel):
     stacks: StacksConfig = StacksConfig()
     ui: UIConfig = UIConfig()
     bot_handle: str = ""
+    skip_globs: list[str] = []
 
 
 def _interpolate(obj, env: dict):
@@ -144,6 +145,7 @@ def load_settings(path: str | None = None, env: dict | None = None) -> Settings:
             stacks=StacksConfig(**raw.get("stacks", {})),
             ui=UIConfig(**raw.get("ui", {})),
             bot_handle=raw.get("bot_handle", ""),
+            skip_globs=raw.get("defaults", {}).get("skip_globs", []),
         )
     except ValidationError as e:
         raise ValueError(f"Invalid config: {e}") from e

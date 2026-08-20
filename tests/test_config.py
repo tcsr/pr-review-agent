@@ -80,3 +80,27 @@ repos: []
     s = load_settings(path, env={})
     assert s.ingress.enabled is True
     assert s.poller.interval_seconds == 60
+
+
+def test_skip_globs_from_defaults(tmp_path):
+    path = _write(tmp_path, """
+llm: {provider: fake, model: fake}
+store: {url: 'sqlite:///:memory:'}
+defaults:
+  tasks: [code_review]
+  skip_globs: ['*.lock', 'node_modules/**']
+repos: []
+""")
+    s = load_settings(path, env={})
+    assert s.skip_globs == ['*.lock', 'node_modules/**']
+
+
+def test_skip_globs_defaults_to_empty(tmp_path):
+    path = _write(tmp_path, """
+llm: {provider: fake, model: fake}
+store: {url: 'sqlite:///:memory:'}
+defaults: {tasks: [code_review]}
+repos: []
+""")
+    s = load_settings(path, env={})
+    assert s.skip_globs == []
