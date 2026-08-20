@@ -33,6 +33,7 @@ class RepoConfig(BaseModel):
     platform: Platform
     full_name: str
     token: str
+    base_url: str | None = None
     tasks: list[str] | None = None
     rules: RulesConfig | None = None
     stacks: StacksConfig | None = None
