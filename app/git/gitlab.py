@@ -73,28 +73,44 @@ class GitLabAdapter(GitPlatformAdapter):
 
     # write methods (Task 2)
     def post_comment(self, repo, pr_number, body) -> str:
-        raise NotImplementedError
+        r = self._post(self._mr(repo, pr_number) + "/notes", {"body": body})
+        return str(r["id"])
 
     def post_inline_comment(self, repo, pr_number, path, line, body, side: Side) -> str:
-        raise NotImplementedError
+        r = self._post(self._mr(repo, pr_number) + "/notes",
+                       {"body": f"`{path}:{line}` {body}"})
+        return str(r["id"])
 
     def set_review_verdict(self, repo, pr_number, verdict: Verdict, body) -> None:
-        raise NotImplementedError
+        if verdict == Verdict.approve:
+            self._post(self._mr(repo, pr_number) + "/approve", {})
+        else:
+            self._post(self._mr(repo, pr_number) + "/notes", {"body": body})
 
     def get_thread(self, repo, pr_number) -> list[Comment]:
-        raise NotImplementedError
+        rows = self._get(self._mr(repo, pr_number) + "/notes")
+        return [Comment(id=str(c["id"]), author=c.get("author", {}).get("username", ""),
+                        body=c.get("body", "")) for c in rows]
 
     def reply(self, repo, pr_number, in_reply_to, body) -> str:
-        raise NotImplementedError
+        r = self._post(self._mr(repo, pr_number) + "/notes", {"body": body})
+        return str(r["id"])
 
     def update_comment(self, repo, pr_number, comment_id, body) -> None:
-        raise NotImplementedError
+        resp = self._client.put(self._mr(repo, pr_number) + f"/notes/{comment_id}",
+                                json={"body": body})
+        raise_for_status(resp)
 
     def list_open_prs(self, repo) -> list[PR]:
-        raise NotImplementedError
+        rows = self._get(f"/projects/{self._enc(repo)}/merge_requests?state=opened")
+        return [PR(platform=Platform.gitlab, repo=repo, number=r["iid"],
+                   head_sha=r.get("sha", "")) for r in rows]
 
     def add_labels(self, repo, pr_number, labels) -> None:
-        raise NotImplementedError
+        resp = self._client.put(self._mr(repo, pr_number),
+                                json={"add_labels": ",".join(labels)})
+        raise_for_status(resp)
 
     def assign_reviewers(self, repo, pr_number, reviewers) -> None:
-        raise NotImplementedError
+        body = "Suggested reviewers: " + " ".join(f"@{r}" for r in reviewers)
+        self._post(self._mr(repo, pr_number) + "/notes", {"body": body})
