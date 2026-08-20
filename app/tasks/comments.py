@@ -18,9 +18,10 @@ def post_or_update(git, repo, pr_number, marker: str, body: str) -> str:
     Returns:
         Comment ID (either existing or newly posted)
     """
-    tagged = f"{body}\n\n<!-- {marker} -->"
+    tag = f"<!-- {marker} -->"
+    tagged = f"{body}\n\n{tag}"
     for c in git.get_thread(repo, pr_number):
-        if marker in (c.body or ""):
+        if tag in (c.body or ""):
             git.update_comment(repo, pr_number, c.id, tagged)
             return c.id
     return git.post_comment(repo, pr_number, tagged)

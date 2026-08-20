@@ -37,3 +37,10 @@ def test_keeps_at_least_one_when_first_exceeds():
     out, truncated = apply_budget(diff, _count, 10, [])
     assert len(out.files) == 1     # never drop everything
     assert truncated is False      # only one candidate, none dropped
+
+
+def test_all_files_skipped_returns_empty_not_truncated():
+    diff = Diff(files=[_fc("a.lock", "x"), _fc("b.lock", "y")])
+    out, truncated = apply_budget(diff, _count, 1000, ["*.lock"])
+    assert out.files == []
+    assert truncated is False   # intentional skip, not truncation

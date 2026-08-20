@@ -63,7 +63,10 @@ class FakeGitAdapter(GitPlatformAdapter):
         self.reviewers.extend(reviewers)
 
     def update_comment(self, repo, pr_number, comment_id, body) -> None:
+        found = False
         for c in self.comments:
             if c.id == comment_id:
                 c.body = body
-        self.updates.append((comment_id, body))
+                found = True
+        if found:
+            self.updates.append((comment_id, body))
