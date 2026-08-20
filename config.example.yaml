@@ -30,6 +30,11 @@ repos:
         require_pr_description: {severity: warn}
     stacks:                 # override global stacks
       packs: {angular: false}
+  - platform: gitlab
+    full_name: group/project
+    token: ${GITLAB_TOKEN}
+    base_url: null            # set for self-hosted, e.g. https://gitlab.example.com/api/v4
+    tasks: null
 ui:
   enabled: true
   admin_user: admin

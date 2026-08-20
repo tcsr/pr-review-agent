@@ -112,6 +112,18 @@ webhooks and `/health` stay public. Set `ui.enabled: false` to run headless.
   hidden marker and edit it on re-review instead of posting duplicates.
 - **CI:** `.github/workflows/ci.yml` runs the test suite on every push and PR.
 
+## GitLab (slice 10)
+GitLab merge requests are supported alongside GitHub. Configure a repo with
+`platform: gitlab`, `full_name: group/project`, and a `PRIVATE-TOKEN` in `token`.
+Self-hosted GitLab: set `base_url: https://gitlab.example.com/api/v4`. Point a
+GitLab webhook at `/webhook/gitlab` (Merge request + Comments events) with the
+secret token set to `ingress.webhook_secret`.
+
+Notes on the GitLab adapter: inline comments post as a note prefixed with the
+file:line (native positioned discussions are a future refinement); `approve`
+uses the approve endpoint while `request_changes` posts a note; reviewer
+suggestions post as a note (GitLab assignment needs numeric user IDs).
+
 ## Next slices
 Additional platforms (Bitbucket/GitLab) and deferred tasks
 — see docs/superpowers/specs.
