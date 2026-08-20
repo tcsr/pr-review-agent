@@ -16,3 +16,19 @@ def test_bitbucket_not_implemented():
     rc = RepoConfig(platform=Platform.bitbucket, full_name="o/r", token="t")
     with pytest.raises(NotImplementedError):
         build_git_adapter(rc)
+
+
+def test_builds_gitlab_adapter():
+    from app.git.gitlab import GitLabAdapter
+    rc = RepoConfig(platform=Platform.gitlab, full_name="grp/proj", token="t")
+    a = build_git_adapter(rc)
+    assert isinstance(a, GitLabAdapter)
+    assert a.repo == "grp/proj"
+
+
+def test_gitlab_self_hosted_base_url():
+    from app.git.gitlab import GitLabAdapter
+    rc = RepoConfig(platform=Platform.gitlab, full_name="grp/proj", token="t",
+                    base_url="https://gitlab.example.com/api/v4")
+    a = build_git_adapter(rc)
+    assert isinstance(a, GitLabAdapter)
