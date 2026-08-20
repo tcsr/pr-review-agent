@@ -15,6 +15,7 @@ class FakeGitAdapter(GitPlatformAdapter):
         self.replies: list[Comment] = []
         self.labels: list[str] = []
         self.reviewers: list[str] = []
+        self.updates: list[tuple[str, str]] = []
         self._ids = count(1)
 
     def _next_id(self) -> str:
@@ -60,3 +61,9 @@ class FakeGitAdapter(GitPlatformAdapter):
 
     def assign_reviewers(self, repo, pr_number, reviewers) -> None:
         self.reviewers.extend(reviewers)
+
+    def update_comment(self, repo, pr_number, comment_id, body) -> None:
+        for c in self.comments:
+            if c.id == comment_id:
+                c.body = body
+        self.updates.append((comment_id, body))

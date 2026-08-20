@@ -37,3 +37,7 @@ class GitPlatformAdapter(ABC):
 
     @abstractmethod
     def assign_reviewers(self, repo: str, pr_number: int, reviewers: list[str]) -> None: ...
+
+    @abstractmethod
+    def update_comment(self, repo: str, pr_number: int, comment_id: str,
+                       body: str) -> None: ...

@@ -113,3 +113,8 @@ class GitHubAdapter(GitPlatformAdapter):
     def assign_reviewers(self, repo, pr_number, reviewers) -> None:
         self._post(f"/repos/{repo}/pulls/{pr_number}/requested_reviewers",
                    {"reviewers": reviewers})
+
+    def update_comment(self, repo, pr_number, comment_id, body) -> None:
+        resp = self._client.patch(
+            f"/repos/{repo}/issues/comments/{comment_id}", json={"body": body})
+        raise_for_status(resp)
