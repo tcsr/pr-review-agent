@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.rules.gates import evaluate_gates
 from app.tasks.base import Task, TaskResult
+from app.tasks.comments import post_or_update
 
 
 class ComplianceTask(Task):
@@ -17,5 +18,5 @@ class ComplianceTask(Task):
         for r in results:
             mark = "✅" if r.passed else "❌"
             lines.append(f"- {mark} **{r.name}** ({r.severity}): {r.message}")
-        git.post_comment(repo, pr_number, "\n".join(lines))
+        post_or_update(git, repo, pr_number, "pr-agent:compliance", "\n".join(lines))
         return TaskResult(self.name, 1)

@@ -33,6 +33,9 @@ def _gh(request):
         return httpx.Response(200, json=[{"filename": "a.py", "patch": "@@ +x",
                                           "additions": 1, "deletions": 0, "status": "modified"}])
     if p == "/repos/o/r/issues/1/comments":
+        # GET returns list, POST returns single comment
+        if request.method == "GET":
+            return httpx.Response(200, json=[])
         return httpx.Response(201, json={"id": 1})
     return httpx.Response(404, text=p)
 

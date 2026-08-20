@@ -21,6 +21,9 @@ def test_reviewer_runs_with_real_adapters_over_mock_http():
                 {"filename": "app.py", "patch": "@@ +x", "additions": 1,
                  "deletions": 0, "status": "modified"}])
         if p == "/repos/o/r/issues/1/comments":
+            # GET returns list, POST returns single comment
+            if request.method == "GET":
+                return httpx.Response(200, json=[])
             return httpx.Response(201, json={"id": 100})
         return httpx.Response(404, text=p)
 
