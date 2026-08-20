@@ -103,6 +103,15 @@ webhooks and `/health` stay public. Set `ui.enabled: false` to run headless.
 
 **Production:** set `ui.session_secret` to a random value (`python -c "import secrets; print(secrets.token_hex(32))"`), set `ui.cookie_secure: true` when served over HTTPS, and set a strong `ui.admin_password_hash`. The service refuses to start with `ui.enabled` and an unset/default session_secret or missing admin credentials.
 
+## Hardening (slice 9)
+- **Token budget:** oversized diffs are trimmed to `llm.max_tokens_per_pr` —
+  files matching `defaults.skip_globs` (e.g. `*.lock`, `dist/**`) are dropped,
+  then the most-changed files are kept within budget; the review notes when a
+  diff was truncated.
+- **Idempotent comments:** `summarize` and `compliance` tag their comment with a
+  hidden marker and edit it on re-review instead of posting duplicates.
+- **CI:** `.github/workflows/ci.yml` runs the test suite on every push and PR.
+
 ## Next slices
 Additional platforms (Bitbucket/GitLab) and deferred tasks
 — see docs/superpowers/specs.

@@ -9,6 +9,7 @@ store:
   url: sqlite:///data/agent.db
 defaults:
   tasks: [triage, code_review, suggest_fixes, summarize, compliance, verdict]
+  skip_globs: ["*.lock", "dist/**", "vendor/**", "*.min.js"]
 rules:
   gates:
     require_linked_issue: {severity: warn}
